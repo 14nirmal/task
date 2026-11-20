@@ -214,45 +214,7 @@ Interactive Swagger UI documentation is automatically available at:
 
 ---
 
-## 7. Model Drift Monitoring & Safe Retraining Strategy
-
-In production financial environments, fraud patterns evolve continuously (adversarial adaptation). The platform implements a structured drift and governance lifecycle:
-
-```mermaid
-flowchart LR
-    A[Live Transactions] --> B[FastAPI Inference]
-    B --> C[Drift Telemetry Logger]
-    C --> D{Drift Detected?}
-    D -- No --> E[Maintain Champion]
-    D -- Yes: PSI > 0.25 / Drop in PR-AUC --> F[Trigger Automated Retraining]
-    F --> G[Canary Deployment: 5% Traffic]
-    G --> H{Passes PR-AUC Gate?}
-    H -- Yes --> I[Promote to Champion]
-    H -- No --> J[Rollback & Alert Team]
-```
-
-### **1. Data Drift Monitoring (Feature Distribution Shifts)**
-- **Population Stability Index (PSI):** Calculated daily on numerical features (`amount`, `transaction_hour`, `previous_declines_24h`):
-  - $\text{PSI} < 0.10$: Stable; no action required.
-  - $0.10 \le \text{PSI} < 0.25$: Slight shift; log warning and monitor.
-  - $\text{PSI} \ge 0.25$: Significant data drift; triggers automated retraining pipeline.
-- **Two-Sample Kolmogorov-Smirnov (KS) Test:** Evaluates whether current 7-day spend distributions differ significantly from training baseline ($p < 0.01$).
-- **Chi-Square Goodness-of-Fit:** Detects shifts in merchant category frequencies (e.g., emergence of novel online merchants).
-
-### **2. Concept Drift Monitoring (Relationship Shifts)**
-- **Ground Truth Ingestion:** Real fraud outcomes materialize via chargebacks over a 30 to 60-day settlement window.
-- **Rolling Performance Tracking:** Continuously monitors rolling 14-day **PR-AUC**, **Recall at 60% Precision**, and **Brier Score**. If PR-AUC degrades by more than 10% from the champion baseline, an incident ticket is raised.
-
-### **3. Safe Retraining & Deployment Protocol**
-1. **Automated Scheduled Retraining:** Retrains models monthly on a rolling 12-month window with strict stratified splits.
-2. **Gated Validation:** Candidate models must beat the incumbent champion's PR-AUC on held-out validation data before deployment.
-3. **Canary / Shadow Rollout:**
-   - The retrained model is initially deployed in **Shadow Mode** (receiving 100% of traffic, logging predictions, but not driving checkout decisions).
-   - Once validated, it is transitioned to **Canary Mode** (5% $\rightarrow$ 25% $\rightarrow$ 100% traffic) with automated rollback triggers on latency spikes or elevated false-positive rates.
-
----
-
-## 8. Installation, Execution & Testing Guide
+## 7. Installation, Execution & Testing Guide
 
 ### **1. Environment Setup**
 ```bash
@@ -291,12 +253,3 @@ python app.py
 ```
 *Navigate to `http://localhost:8000/docs` to test endpoints interactively.*
 
----
-
-## 9. Assessment Rules & Ethical Compliance
-
-1. **Zero Fabrication:** All reported evaluation metrics are derived directly from empirical evaluation on held-out test data (`test_set.csv`).
-2. **Zero Test Data Leakage:** Preprocessing transformations and scalers were fitted strictly on `X_train`. The test set was locked and never used for tuning.
-3. **Zero Test Resampling:** Class balancing (`class_weight='balanced_subsample'`) was applied exclusively in training; no synthetic data was applied to evaluation sets.
-4. **Zero Simulated / Hard-coded Predictions:** All API predictions are computed dynamically by the loaded Scikit-Learn pipeline.
-5. **Privacy Safeguard:** PII and identifier columns (`cc_num`, `first`, `last`, `street`) were explicitly eliminated from model features.
