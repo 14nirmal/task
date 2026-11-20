@@ -59,10 +59,14 @@ def evaluate_models(
 
     # Load pipelines
     model_files = {
-        "Logistic Regression (Baseline)": "logistic_regression_baseline_pipeline.joblib",
-        "Random Forest": "random_forest_pipeline.joblib",
-        "HistGradientBoosting": "hist_gradient_boosting_pipeline.joblib"
+        "Random Forest (Champion)": "fraud_model.joblib"
     }
+    for cand_name, cand_file in [
+        ("Logistic Regression (Baseline)", "logistic_regression_baseline_pipeline.joblib"),
+        ("HistGradientBoosting", "hist_gradient_boosting_pipeline.joblib")
+    ]:
+        if os.path.exists(os.path.join(models_dir, cand_file)):
+            model_files[cand_name] = cand_file
 
     eval_results = []
     curves_data = {}

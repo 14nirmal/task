@@ -1,14 +1,21 @@
+# Byte-compiled / optimized / cache files
 __pycache__/
 *.py[cod]
 *$py.class
-*.joblib
-*.pkl
 .pytest_cache/
 .coverage
 htmlcov/
-data/raw/*.csv
-data/processed/*.csv
+
+# Environments
 .env
 .venv/
 env/
 venv/
+
+# Large datasets (>100MB should not be pushed to GitHub)
+data/raw/*.csv
+data/processed/*.csv
+
+# Temporary test files
+*.tmp
+*.pyd.old
